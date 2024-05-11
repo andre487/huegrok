@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -eufo pipefail
+
+if [[ -z "${HUEGROK_HOST:-}" ]]; then
+    echo "You should set HUEGROK_HOST env var"
+    exit 1
+fi
+
+src_port="${1:-}"
+if [[ -z "$src_port" ]]; then
+    echo "Usage: $0 src_port [dest_subdomain]"
+    exit 1
+fi
+
+dest_subdomain="${2:-c8080}"
+
+correct_subdomains=(c8080 c8081 c8082 c8083 c8084 c8085)
+correct_subdomain=0
+for expected in "${correct_subdomains[@]}"; do
+    if [[ "$dest_subdomain" == "$expected" ]]; then
+        correct_subdomain=1
+        break
+    fi
+done
+
+if [[ "$correct_subdomain" == 0 ]]; then
+    echo "Incorrect dest_subdomain $dest_subdomain. Correct are: ${correct_subdomains[*]}"
+    exit 1
+fi
+
+dest_port="${dest_subdomain/c/}"
+echo "Your URL: http://$dest_subdomain.$HUEGROK_HOST"
+set -x
+ssh -nNT -R "$dest_port:127.0.0.1:$src_port" "$HUEGROK_HOST"

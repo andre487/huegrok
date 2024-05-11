@@ -1,0 +1,27 @@
+- hosts: "{{ target }}"
+  become: true
+  become_method: sudo
+  tasks:
+  - name: Install NGINX
+    apt:
+      update_cache: true
+      cache_valid_time: 3600
+      name:
+        - nginx
+      state: present
+
+  - name: Setup NGINX
+    template:
+      src: provision/nginx-huegrok.conf
+      dest: /etc/nginx/sites-available/nginx-huegrok.conf
+
+  - name: Enable NGINX config
+    file:
+      state: link
+      src: /etc/nginx/sites-available/nginx-huegrok.conf
+      dest: /etc/nginx/sites-enabled/nginx-huegrok.conf
+
+  - name: Reload NGINX config
+    service:
+      name: nginx
+      state: reloaded
